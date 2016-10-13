@@ -269,6 +269,14 @@ class Offline {
         if (!event.http) return;
 
         // generate an enpoint via the endpoint class
+        if(typeof event.http == 'string'){
+          var split = event.http.split(' ');
+          event.http = {
+            path: split[1],
+            method: split[0]
+          }
+        }
+
         const endpoint = new Endpoint(event.http, funOptions).generate();
 
         let firstCall = true;
@@ -389,6 +397,8 @@ class Offline {
 
             /* HANDLER LAZY LOADING */
 
+            const nullIfEmpty = o => o && (Object.keys(o).length > 0 ? o : null);
+
             let handler; // The lambda function
 
             try {
@@ -416,11 +426,13 @@ class Offline {
               }
             } else if (integration === 'lambda-proxy') {
               event = {
+                resource: fullPath,
+                path: request.path,
                 httpMethod: request.method.toUpperCase(),
                 headers: request.headers,
-                pathParameters: Object.assign({}, request.params),
-                queryStringParameters: Object.assign({}, request.query),
-                body: JSON.stringify(request.payload),
+                pathParameters: nullIfEmpty(request.params),
+                queryStringParameters: nullIfEmpty(request.query),
+                body: request.payload && JSON.stringify(request.payload),
                 stageVariables: this.velocityContextOptions.stageVariables,
               };
             }
@@ -433,6 +445,7 @@ class Offline {
               event.stageVariables = {};
             }
 
+            event.stageVariables = nullIfEmpty(event.stageVariables)
             debugLog('event:', event);
 
             // We create the context, its callback (context.done/succeed/fail) will send the HTTP response
