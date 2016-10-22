@@ -10,6 +10,7 @@ const path = require('path');
 // External dependencies
 const Hapi = require('hapi');
 const isPlainObject = require('lodash').isPlainObject;
+const assign = require('lodash').assign;
 
 // Internal lib
 require('./javaHelper');
@@ -606,6 +607,7 @@ class Offline {
               }
               else if (integration === 'lambda-proxy') {
                 response.statusCode = statusCode = result.statusCode;
+                assign(response.headers, {'Content-Type': 'application-json'}, result.headers);
                 if (typeof result.body !== 'undefined') {
                   response.source = JSON.parse(result.body);
                 }
